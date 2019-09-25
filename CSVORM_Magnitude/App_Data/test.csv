@@ -1,0 +1,3 @@
+﻿name,age,employee,salary,contract
+string,int,bool,long,bool
+sid,32,TRUE,30000,FALSE
