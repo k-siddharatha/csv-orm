@@ -5,28 +5,46 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using Microsoft.VisualBasic.FileIO;
 
 namespace CSVORM_Magnitude.Controllers
 {
+    public class Select{
+        public Select(List<string> selectValues) {
+
+        }
+    }
+
     public class ValuesController : ApiController
     {
         // GET api/values
-        public IEnumerable<string> Get()
+        public IEnumerable<string> Get(string csvTable)
         {
-            string[] read;
-            char[] seperators = { ',' };
+            string retValue1 = "";
+            Console.WriteLine(csvTable+ "the csv name");
 
-            StreamReader sr = new StreamReader(@"C:\Users\kumarsid\source\repos\CSVORM_Magnitude\CSVORM_Magnitude\App_Data\test.csv");
-
-            string data = sr.ReadLine();
-
-            while ((data = sr.ReadLine()) != null)
+            var path = @"C:\Users\kumarsid\source\repos\CSVORM_Magnitude\CSVORM_Magnitude\App_Data\test.csv"; 
+            using (TextFieldParser csvParser = new TextFieldParser(path))
             {
-                read = data.Split(seperators, StringSplitOptions.None);
-                float longitude = float.Parse(read[1]);
-                float latitude = float.Parse(read[2]);
+                csvParser.CommentTokens = new string[] { "#" };
+                csvParser.SetDelimiters(new string[] { "," });
+                csvParser.HasFieldsEnclosedInQuotes = true;
+
+                // Skip the row with the column names
+                string[] fields = csvParser.ReadFields();
+                int selectIndex = Array.IndexOf(fields, "name");
+                string whereClause = "sid";
+               
+                while (!csvParser.EndOfData)
+                {
+                    // Read current line fields, pointer moves to the next line.
+                    string[] values = csvParser.ReadFields();
+                    if (whereClause.Equals(values[selectIndex])) {
+                        retValue1 = values[selectIndex];
+                    }
+                }
             }
-            return new string[] { "value1", "value2" };
+            return new string[] { retValue1, "value2" };
         }
 
         // GET api/values/5
