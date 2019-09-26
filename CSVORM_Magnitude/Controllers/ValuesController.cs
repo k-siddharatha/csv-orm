@@ -11,9 +11,9 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace CSVORM_Magnitude.Controllers
 {
-    public enum Operator { e, g, l };
     public class DynamicEntity : DynamicObject
     {
+
         private readonly IDictionary<string, object> _values;
 
         public DynamicEntity(IDictionary<string, object> values)
@@ -36,93 +36,108 @@ namespace CSVORM_Magnitude.Controllers
         }
     }
 
-
-
-    public interface IRowMatch {
+    public interface IRowMatch
+    {
         bool isRowMatch(TextFieldParser csvParse, string[] conditions);
     }
 
 
     public class ValuesController : ApiController
     {
+        HashSet<DynamicEntity> dynPosts = new HashSet<DynamicEntity>();
+        
+
 
         // select name from test.csv where salary > 30
         // GET api/values
         public IEnumerable<DynamicEntity> Get(string csvTable)
         {
-            var values = new Dictionary<string, object>();
-            List<DynamicEntity> dynPosts = new List<DynamicEntity>();
             var path = HttpContext.Current.Server.MapPath(@"~\App_Data\" + csvTable + ".csv");
-            var conditionClauses = "salary < 4000000";
-            string[] conditionClause = conditionClauses.Split();
+            var conditionClauses = "(salary < 4000000) OR (employee = TRUE)";
+            string[] conditionClause;
+            string[] complexCondition = conditionClauses.Split(new string[] { "AND", "OR" }, StringSplitOptions.None);
 
-            using (TextFieldParser csvParser = new TextFieldParser(path))
+            foreach (string condition in complexCondition)
             {
-                string[] fields = csvParserDefaultSet(csvParser);
-                int[] selectIndex = { Array.IndexOf(fields, "name"), Array.IndexOf(fields, "salary") };
-              
-                int conditionIndex = Array.IndexOf(fields, conditionClause[0]);
-                string whereClause = conditionClause[2];
-                
-                while (!csvParser.EndOfData)
+                conditionClause = condition.Replace('(', ' ').Replace(')', ' ').Trim().Split();
+
+                using (TextFieldParser csvParser = new TextFieldParser(path))
                 {
-                    string[] returnRow = csvParser.ReadFields();
-                    switch (conditionClause[1]) {
-                        case "=":
-                            {
-                                if (whereClause.Equals(returnRow[conditionIndex]))
+                    string[] fields = csvParserDefaultSet(csvParser);
+                    int[] selectIndex = { Array.IndexOf(fields, "name"), Array.IndexOf(fields, "salary") };
+
+                    int conditionIndex = Array.IndexOf(fields, conditionClause[0]);
+                    string whereClause = conditionClause[2];
+
+                    while (!csvParser.EndOfData)
+                    {
+                        string[] returnRow = csvParser.ReadFields();
+                        switch (conditionClause[1])
+                        {
+                            case "=":
                                 {
-                                    foreach (int i in selectIndex)
+                                    if (whereClause.Equals(returnRow[conditionIndex]))
                                     {
-                                        values.Add(fields[i], returnRow[i]);
+                                        var entry = addToList(selectIndex, fields, returnRow);
+                                        if (entry != null)
+                                        {
+                                            dynPosts.Add(entry);
+                                        }
+
                                     }
-                                    var post = new DynamicEntity(values);
-                                    dynPosts.Add(post);
                                 }
-                            }
-                            break;
-                        case "<":
-                            {
-                                if (int.TryParse(returnRow[conditionIndex], out int K)
-                                    && int.TryParse(whereClause, out int J)
-                                    && K<J)
+                                break;
+                            case "<":
                                 {
-                                    foreach (int i in selectIndex)
+                                    if (int.TryParse(returnRow[conditionIndex], out int K)
+                                        && int.TryParse(whereClause, out int J)
+                                        && K < J)
                                     {
-                                        values.Add(fields[i], returnRow[i]);
+                                        var entry = addToList(selectIndex, fields, returnRow);
+                                        if (entry != null)
+                                        {
+                                            dynPosts.Add(entry);
+                                        }
                                     }
-                                    var post = new DynamicEntity(values);
-                                    dynPosts.Add(post);
                                 }
-                            }
-                            break;
-                        case ">":
-                            {
-                                if (int.TryParse(returnRow[conditionIndex], out int K)
-                                    && int.TryParse(whereClause, out int J)
-                                    && K > J)
+                                break;
+                            case ">":
                                 {
-                                    foreach (int i in selectIndex)
+                                    if (int.TryParse(returnRow[conditionIndex], out int K)
+                                        && int.TryParse(whereClause, out int J)
+                                        && K > J)
                                     {
-                                        values.Add(fields[i], returnRow[i]);
+                                        var entry = addToList(selectIndex, fields, returnRow);
+                                        if (entry != null)
+                                        {
+                                            dynPosts.Add(entry);
+                                        }
                                     }
-                                    var post = new DynamicEntity(values);
-                                    dynPosts.Add(post);
                                 }
-                            }
-                            break;
+                                break;
+                        }
+
                     }
-                    
                 }
             }
-
             return dynPosts;
 
         }
 
-    
+        public DynamicEntity addToList(int[] selectIndex, string[] fields, string[] returnRow)
+        {
+            Dictionary<string, object> values = new Dictionary<string, object>();
 
-        public string[] csvParserDefaultSet(TextFieldParser csvParser) {
+            foreach (int i in selectIndex)
+            {
+                values.Add(fields[i], returnRow[i]);
+            }
+            return new DynamicEntity(values);
+
+        }
+
+        public string[] csvParserDefaultSet(TextFieldParser csvParser)
+        {
             csvParser.CommentTokens = new string[] { "#" };
             csvParser.SetDelimiters(new string[] { "," });
             csvParser.HasFieldsEnclosedInQuotes = true;
@@ -132,8 +147,8 @@ namespace CSVORM_Magnitude.Controllers
         // GET api/values/5
         public string Get(int id)
         {
-            return "id: "+id;
-                
+            return "id: " + id;
+
         }
 
         // POST api/values
