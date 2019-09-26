@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,48 +10,88 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace CSVORM_Magnitude.Controllers
 {
-    public class Select{
-        public Select(List<string> selectValues) {
+    public class DynamicEntity : DynamicObject
+    {
+        private readonly IDictionary<string, object> _values;
 
+        public DynamicEntity(IDictionary<string, object> values)
+        {
+            _values = values;
+        }
+        public override IEnumerable<string> GetDynamicMemberNames()
+        {
+            return _values.Keys;
+        }
+        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        {
+            if (_values.ContainsKey(binder.Name))
+            {
+                result = _values[binder.Name];
+                return true;
+            }
+            result = null;
+            return false;
         }
     }
 
+
+
+    public interface IRowMatch {
+        bool isRowMatch(TextFieldParser csvParse, string[] conditions);
+    }
+
+
     public class ValuesController : ApiController
     {
-        // GET api/values
-        public IEnumerable<string> Get(string csvTable)
-        {
-            string retValue1 = "";
-            Console.WriteLine(csvTable+ "the csv name");
 
-            var path = @"C:\Users\kumarsid\source\repos\CSVORM_Magnitude\CSVORM_Magnitude\App_Data\test.csv"; 
+        // select name from test.csv where salary > 30
+        // GET api/values
+        public IEnumerable<DynamicEntity> Get(string csvTable)
+        {
+            var values = new Dictionary<string, object>();
+            List<DynamicEntity> dynPosts = new List<DynamicEntity>();
+            var path = @"C:\Users\kumarsid\source\repos\CSVORM_Magnitude\CSVORM_Magnitude\App_Data\" + csvTable + ".csv";
+
             using (TextFieldParser csvParser = new TextFieldParser(path))
             {
-                csvParser.CommentTokens = new string[] { "#" };
-                csvParser.SetDelimiters(new string[] { "," });
-                csvParser.HasFieldsEnclosedInQuotes = true;
-
-                // Skip the row with the column names
-                string[] fields = csvParser.ReadFields();
-                int selectIndex = Array.IndexOf(fields, "name");
+                string[] fields = csvParserDefaultSet(csvParser);
+                int[] selectIndex = { Array.IndexOf(fields, "name"), Array.IndexOf(fields, "salary") };
+                int conditionIndex = Array.IndexOf(fields, "name");
                 string whereClause = "sid";
-               
+                
                 while (!csvParser.EndOfData)
                 {
-                    // Read current line fields, pointer moves to the next line.
-                    string[] values = csvParser.ReadFields();
-                    if (whereClause.Equals(values[selectIndex])) {
-                        retValue1 = values[selectIndex];
+                    string[] returnRow = csvParser.ReadFields();
+                    
+                    if (whereClause.Equals(returnRow[conditionIndex]))
+                    {
+                        foreach (int i in selectIndex) {
+                            values.Add(fields[i], returnRow[i]);
+                        }
+                        var post = new DynamicEntity(values);
+                        dynPosts.Add(post);
                     }
                 }
             }
-            return new string[] { retValue1, "value2" };
+
+            return dynPosts;
+
+        }
+
+    
+
+        public string[] csvParserDefaultSet(TextFieldParser csvParser) {
+            csvParser.CommentTokens = new string[] { "#" };
+            csvParser.SetDelimiters(new string[] { "," });
+            csvParser.HasFieldsEnclosedInQuotes = true;
+            return csvParser.ReadFields();
         }
 
         // GET api/values/5
         public string Get(int id)
         {
-            return "value"+id;
+            return "id: "+id;
+                
         }
 
         // POST api/values
@@ -67,5 +108,6 @@ namespace CSVORM_Magnitude.Controllers
         public void Delete(int id)
         {
         }
+
     }
 }
