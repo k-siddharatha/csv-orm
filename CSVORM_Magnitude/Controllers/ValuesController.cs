@@ -5,11 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Web;
 using System.Web.Http;
 using Microsoft.VisualBasic.FileIO;
 
 namespace CSVORM_Magnitude.Controllers
 {
+    public enum Operator { e, g, l };
     public class DynamicEntity : DynamicObject
     {
         private readonly IDictionary<string, object> _values;
@@ -50,27 +52,67 @@ namespace CSVORM_Magnitude.Controllers
         {
             var values = new Dictionary<string, object>();
             List<DynamicEntity> dynPosts = new List<DynamicEntity>();
-            var path = @"C:\Users\kumarsid\source\repos\CSVORM_Magnitude\CSVORM_Magnitude\App_Data\" + csvTable + ".csv";
+            var path = HttpContext.Current.Server.MapPath(@"~\App_Data\" + csvTable + ".csv");
+            var conditionClauses = "salary < 4000000";
+            string[] conditionClause = conditionClauses.Split();
 
             using (TextFieldParser csvParser = new TextFieldParser(path))
             {
                 string[] fields = csvParserDefaultSet(csvParser);
                 int[] selectIndex = { Array.IndexOf(fields, "name"), Array.IndexOf(fields, "salary") };
-                int conditionIndex = Array.IndexOf(fields, "name");
-                string whereClause = "sid";
+              
+                int conditionIndex = Array.IndexOf(fields, conditionClause[0]);
+                string whereClause = conditionClause[2];
                 
                 while (!csvParser.EndOfData)
                 {
                     string[] returnRow = csvParser.ReadFields();
-                    
-                    if (whereClause.Equals(returnRow[conditionIndex]))
-                    {
-                        foreach (int i in selectIndex) {
-                            values.Add(fields[i], returnRow[i]);
-                        }
-                        var post = new DynamicEntity(values);
-                        dynPosts.Add(post);
+                    switch (conditionClause[1]) {
+                        case "=":
+                            {
+                                if (whereClause.Equals(returnRow[conditionIndex]))
+                                {
+                                    foreach (int i in selectIndex)
+                                    {
+                                        values.Add(fields[i], returnRow[i]);
+                                    }
+                                    var post = new DynamicEntity(values);
+                                    dynPosts.Add(post);
+                                }
+                            }
+                            break;
+                        case "<":
+                            {
+                                if (int.TryParse(returnRow[conditionIndex], out int K)
+                                    && int.TryParse(whereClause, out int J)
+                                    && K<J)
+                                {
+                                    foreach (int i in selectIndex)
+                                    {
+                                        values.Add(fields[i], returnRow[i]);
+                                    }
+                                    var post = new DynamicEntity(values);
+                                    dynPosts.Add(post);
+                                }
+                            }
+                            break;
+                        case ">":
+                            {
+                                if (int.TryParse(returnRow[conditionIndex], out int K)
+                                    && int.TryParse(whereClause, out int J)
+                                    && K > J)
+                                {
+                                    foreach (int i in selectIndex)
+                                    {
+                                        values.Add(fields[i], returnRow[i]);
+                                    }
+                                    var post = new DynamicEntity(values);
+                                    dynPosts.Add(post);
+                                }
+                            }
+                            break;
                     }
+                    
                 }
             }
 
