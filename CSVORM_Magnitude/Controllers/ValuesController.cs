@@ -36,9 +36,30 @@ namespace CSVORM_Magnitude.Controllers
         }
     }
 
+    public class SimpleConditions : IRowMatch
+    {
+        public string colName;
+        public string value;
+        public string opera;
+        public bool isRowMatch(string[] returnRow, string[] conditions)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class ComplexCondition : IRowMatch
+    {
+        public string AndOrOr;
+        public List<SimpleConditions> condtions;
+        public bool isRowMatch(string[] returnRow, string[] conditions)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public interface IRowMatch
     {
-        bool isRowMatch(TextFieldParser csvParse, string[] conditions);
+        bool isRowMatch(string[] returnRow, string[] conditions);
     }
 
 
@@ -55,12 +76,24 @@ namespace CSVORM_Magnitude.Controllers
             var path = HttpContext.Current.Server.MapPath(@"~\App_Data\" + csvTable + ".csv");
             var conditionClauses = "(salary < 4000000) OR (employee = TRUE)";
             string[] conditionClause;
-            string[] complexCondition = conditionClauses.Split(new string[] { "AND", "OR" }, StringSplitOptions.None);
+            string[] complexCondition = conditionClauses.Split(new string[] { "AND", "OR" }, StringSplitOptions.RemoveEmptyEntries);
 
+            //ComplexCondition complex = new ComplexCondition() {
+            //    AndOrOr =  
+            //} 
+            
+
+
+            //simple condition
             foreach (string condition in complexCondition)
             {
                 conditionClause = condition.Replace('(', ' ').Replace(')', ' ').Trim().Split();
-
+                SimpleConditions simpleConditions = new SimpleConditions() {
+                    colName = conditionClause[0],
+                    opera = conditionClause[1],
+                    value = conditionClause[2]
+                };
+                
                 using (TextFieldParser csvParser = new TextFieldParser(path))
                 {
                     string[] fields = csvParserDefaultSet(csvParser);
@@ -77,6 +110,19 @@ namespace CSVORM_Magnitude.Controllers
                             case "=":
                                 {
                                     if (whereClause.Equals(returnRow[conditionIndex]))
+                                    {
+                                        var entry = addToList(selectIndex, fields, returnRow);
+                                        if (entry != null)
+                                        {
+                                            dynPosts.Add(entry);
+                                        }
+
+                                    }
+                                }
+                                break;
+                            case "!=":
+                                {
+                                    if (!whereClause.Equals(returnRow[conditionIndex]))
                                     {
                                         var entry = addToList(selectIndex, fields, returnRow);
                                         if (entry != null)
@@ -106,6 +152,34 @@ namespace CSVORM_Magnitude.Controllers
                                     if (int.TryParse(returnRow[conditionIndex], out int K)
                                         && int.TryParse(whereClause, out int J)
                                         && K > J)
+                                    {
+                                        var entry = addToList(selectIndex, fields, returnRow);
+                                        if (entry != null)
+                                        {
+                                            dynPosts.Add(entry);
+                                        }
+                                    }
+                                }
+                                break;
+                            case ">=":
+                                {
+                                    if (int.TryParse(returnRow[conditionIndex], out int K)
+                                        && int.TryParse(whereClause, out int J)
+                                        && K >= J)
+                                    {
+                                        var entry = addToList(selectIndex, fields, returnRow);
+                                        if (entry != null)
+                                        {
+                                            dynPosts.Add(entry);
+                                        }
+                                    }
+                                }
+                                break;
+                            case "<=":
+                                {
+                                    if (int.TryParse(returnRow[conditionIndex], out int K)
+                                        && int.TryParse(whereClause, out int J)
+                                        && K <= J)
                                     {
                                         var entry = addToList(selectIndex, fields, returnRow);
                                         if (entry != null)
