@@ -8,7 +8,7 @@ namespace CSVORM_Magnitude.Models
     public enum AndOrOr { AND, OR };
     public class ComplexCondition : IRowMatch
     {
-        public AndOrOr AndOrOr;
+        public List<AndOrOr> AndOrOr;
         public List<SimpleCondition> condtions;
         public void isRowMatch(string[] returnRow, string[] conditions)
         {

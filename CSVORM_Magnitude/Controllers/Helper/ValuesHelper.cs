@@ -12,7 +12,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
     public class rowFinderVariable{
         string[] row;
         string[] fields;
-        string[] selectIndex;
+        List<int> selectIndex;
         SimpleCondition condition;
     }
     public class ValuesHelper
@@ -21,7 +21,6 @@ namespace CSVORM_Magnitude.Controllers.Helper
         public void rowFinder(string[] row, string[] fields, List<int> selectIndex, SimpleCondition condition, ref List<DynamicEntity> dynPosts)
         {
             string[] returnRow = row;
-            // int[] selectIndex = { Array.IndexOf(fields, "emp_id"), Array.IndexOf(fields, "name"), Array.IndexOf(fields, "salary") };
             int conditionIndex = Array.IndexOf(fields, condition.colName);
             string whereClause = condition.value;
             switch (condition.opera)

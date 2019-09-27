@@ -31,7 +31,9 @@ namespace CSVORM_Magnitude.Controllers
             string[] complexCondition = conditionClauses.Split(new string[] { "AND", "OR" }, StringSplitOptions.RemoveEmptyEntries);
 
             ComplexCondition complex = new ComplexCondition();
-            complex.AndOrOr = conditionClauses.Contains("AND") ? AndOrOr.AND : AndOrOr.OR;
+            complex.AndOrOr = new List<AndOrOr>();
+
+            complex.AndOrOr.Add(conditionClauses.Contains("AND") ? AndOrOr.AND : AndOrOr.OR);
             complex.condtions = new List<SimpleCondition>();
 
             ValuesHelper helper = new ValuesHelper();
