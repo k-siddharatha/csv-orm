@@ -24,7 +24,7 @@ namespace CSVORM_Magnitude.Controllers
         {
             List<DynamicEntity> dynPosts = new List<DynamicEntity>();
             var path = HttpContext.Current.Server.MapPath(@"~\App_Data\" + csvTable + ".csv");
-            var conditionClauses = "(salary < 4000000) OR (emp_id = 1)";
+            var conditionClauses = "(salary < 4000000) OR (emp_id = 1) OR (name = sid_1)";
             string[] conditionClause;
             string[] complexCondition = conditionClauses.Split(new string[] { "AND", "OR" }, StringSplitOptions.RemoveEmptyEntries);
 
