@@ -25,6 +25,8 @@ namespace CSVORM_Magnitude.Controllers
             List<DynamicEntity> dynPosts = new List<DynamicEntity>();
             var path = HttpContext.Current.Server.MapPath(@"~\App_Data\" + csvTable + ".csv");
             var conditionClauses = "(salary < 4000000) OR (emp_id = 1) OR (name = sid_1)";
+            string[] select = { "emp_id", "name", "salary" };
+
             string[] conditionClause;
             string[] complexCondition = conditionClauses.Split(new string[] { "AND", "OR" }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -55,7 +57,13 @@ namespace CSVORM_Magnitude.Controllers
                     while (!csvParser.EndOfData)
                     {
                         string[] returnRow = csvParser.ReadFields();
-                        helper.rowFinder(returnRow, fields, condition, ref dynPosts);                       
+
+                        List<int> selectList = new List<int>();
+                        foreach (var s in select) {
+                            selectList.Add(Array.IndexOf(fields, s));
+                        }
+                        
+                        helper.rowFinder(returnRow, fields, selectList, condition, ref dynPosts);                       
                     }
                 }
             }

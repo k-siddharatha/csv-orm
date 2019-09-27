@@ -9,13 +9,19 @@ using System.Web;
 
 namespace CSVORM_Magnitude.Controllers.Helper
 {
+    public class rowFinderVariable{
+        string[] row;
+        string[] fields;
+        string[] selectIndex;
+        SimpleCondition condition;
+    }
     public class ValuesHelper
     {
 
-        public void rowFinder(string[] row, string[] fields, SimpleCondition condition, ref List<DynamicEntity> dynPosts)
+        public void rowFinder(string[] row, string[] fields, List<int> selectIndex, SimpleCondition condition, ref List<DynamicEntity> dynPosts)
         {
             string[] returnRow = row;
-            int[] selectIndex = { Array.IndexOf(fields, "emp_id"), Array.IndexOf(fields, "name"), Array.IndexOf(fields, "salary") };
+            // int[] selectIndex = { Array.IndexOf(fields, "emp_id"), Array.IndexOf(fields, "name"), Array.IndexOf(fields, "salary") };
             int conditionIndex = Array.IndexOf(fields, condition.colName);
             string whereClause = condition.value;
             switch (condition.opera)
@@ -101,7 +107,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
         {
             return lst.FindAll(i => GetProperty(i, propName).Equals(value));
         }
-        public void addToList(int[] selectIndex, string[] fields, string[] returnRow, ref List<DynamicEntity> dynPosts)
+        public void addToList(List<int> selectIndex, string[] fields, string[] returnRow, ref List<DynamicEntity> dynPosts)
         {
             Dictionary<string, object> values = new Dictionary<string, object>();
             if (LookUpAlt(dynPosts, "emp_id", returnRow[0]) == 0)
