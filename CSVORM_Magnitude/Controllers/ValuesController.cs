@@ -35,13 +35,13 @@ namespace CSVORM_Magnitude.Controllers
             return false;
         }
     }
-
+    public enum AndOrOr { AND,OR};
     public class SimpleConditions : IRowMatch
     {
         public string colName;
         public string value;
         public string opera;
-        public bool isRowMatch(string[] returnRow, string[] conditions)
+        public void isRowMatch(string[] returnRow, string[] conditions)
         {
             throw new NotImplementedException();
         }
@@ -49,9 +49,9 @@ namespace CSVORM_Magnitude.Controllers
 
     public class ComplexCondition : IRowMatch
     {
-        public string AndOrOr;
+        public AndOrOr AndOrOr;
         public List<SimpleConditions> condtions;
-        public bool isRowMatch(string[] returnRow, string[] conditions)
+        public void isRowMatch(string[] returnRow, string[] conditions)
         {
             throw new NotImplementedException();
         }
@@ -59,15 +59,13 @@ namespace CSVORM_Magnitude.Controllers
 
     public interface IRowMatch
     {
-        bool isRowMatch(string[] returnRow, string[] conditions);
+        void isRowMatch(string[] returnRow, string[] conditions);
     }
 
 
     public class ValuesController : ApiController
     {
         HashSet<DynamicEntity> dynPosts = new HashSet<DynamicEntity>();
-        
-
 
         // select name from test.csv where salary > 30
         // GET api/values
@@ -78,124 +76,137 @@ namespace CSVORM_Magnitude.Controllers
             string[] conditionClause;
             string[] complexCondition = conditionClauses.Split(new string[] { "AND", "OR" }, StringSplitOptions.RemoveEmptyEntries);
 
-            //ComplexCondition complex = new ComplexCondition() {
-            //    AndOrOr =  
-            //} 
-            
-
-
-            //simple condition
-            foreach (string condition in complexCondition)
+            ComplexCondition complex = new ComplexCondition();
+            if (conditionClauses.Contains("AND"))
             {
+                complex.AndOrOr = AndOrOr.AND;
+            } else {
+                complex.AndOrOr = AndOrOr.OR;
+            }
+            complex.condtions = new List<SimpleConditions>();
+
+            foreach (string condition in complexCondition) {
                 conditionClause = condition.Replace('(', ' ').Replace(')', ' ').Trim().Split();
-                SimpleConditions simpleConditions = new SimpleConditions() {
+                SimpleConditions simpleConditions = new SimpleConditions()
+                {
                     colName = conditionClause[0],
                     opera = conditionClause[1],
                     value = conditionClause[2]
                 };
-                
+                complex.condtions.Add(simpleConditions);
+            }
+
+
+            //simple condition
+            foreach (var condition in complex.condtions)
+            {
                 using (TextFieldParser csvParser = new TextFieldParser(path))
                 {
                     string[] fields = csvParserDefaultSet(csvParser);
-                    int[] selectIndex = { Array.IndexOf(fields, "name"), Array.IndexOf(fields, "salary") };
-
-                    int conditionIndex = Array.IndexOf(fields, conditionClause[0]);
-                    string whereClause = conditionClause[2];
-
+                    
                     while (!csvParser.EndOfData)
                     {
                         string[] returnRow = csvParser.ReadFields();
-                        switch (conditionClause[1])
-                        {
-                            case "=":
-                                {
-                                    if (whereClause.Equals(returnRow[conditionIndex]))
-                                    {
-                                        var entry = addToList(selectIndex, fields, returnRow);
-                                        if (entry != null)
-                                        {
-                                            dynPosts.Add(entry);
-                                        }
-
-                                    }
-                                }
-                                break;
-                            case "!=":
-                                {
-                                    if (!whereClause.Equals(returnRow[conditionIndex]))
-                                    {
-                                        var entry = addToList(selectIndex, fields, returnRow);
-                                        if (entry != null)
-                                        {
-                                            dynPosts.Add(entry);
-                                        }
-
-                                    }
-                                }
-                                break;
-                            case "<":
-                                {
-                                    if (int.TryParse(returnRow[conditionIndex], out int K)
-                                        && int.TryParse(whereClause, out int J)
-                                        && K < J)
-                                    {
-                                        var entry = addToList(selectIndex, fields, returnRow);
-                                        if (entry != null)
-                                        {
-                                            dynPosts.Add(entry);
-                                        }
-                                    }
-                                }
-                                break;
-                            case ">":
-                                {
-                                    if (int.TryParse(returnRow[conditionIndex], out int K)
-                                        && int.TryParse(whereClause, out int J)
-                                        && K > J)
-                                    {
-                                        var entry = addToList(selectIndex, fields, returnRow);
-                                        if (entry != null)
-                                        {
-                                            dynPosts.Add(entry);
-                                        }
-                                    }
-                                }
-                                break;
-                            case ">=":
-                                {
-                                    if (int.TryParse(returnRow[conditionIndex], out int K)
-                                        && int.TryParse(whereClause, out int J)
-                                        && K >= J)
-                                    {
-                                        var entry = addToList(selectIndex, fields, returnRow);
-                                        if (entry != null)
-                                        {
-                                            dynPosts.Add(entry);
-                                        }
-                                    }
-                                }
-                                break;
-                            case "<=":
-                                {
-                                    if (int.TryParse(returnRow[conditionIndex], out int K)
-                                        && int.TryParse(whereClause, out int J)
-                                        && K <= J)
-                                    {
-                                        var entry = addToList(selectIndex, fields, returnRow);
-                                        if (entry != null)
-                                        {
-                                            dynPosts.Add(entry);
-                                        }
-                                    }
-                                }
-                                break;
-                        }
-
+                        rowFinder(returnRow, fields, condition, ref dynPosts);                       
                     }
                 }
             }
             return dynPosts;
 
+        }
+
+        public void rowFinder(string[] row,string[] fields, SimpleConditions condition, ref HashSet<DynamicEntity> dynPosts)
+        {
+            string[] returnRow = row;
+            int[] selectIndex = { Array.IndexOf(fields, "name"), Array.IndexOf(fields, "salary") };
+
+            int conditionIndex = Array.IndexOf(fields, condition.colName);
+            string whereClause = condition.value;
+            switch (condition.opera)
+            {
+                case "=":
+                    {
+                        if (whereClause.Equals(returnRow[conditionIndex]))
+                        {
+                            var entry = addToList(selectIndex, fields, returnRow);
+                            if (entry != null)
+                            {
+                                dynPosts.Add(entry);
+                            }
+
+                        }
+                    }
+                    break;
+                case "!=":
+                    {
+                        if (!whereClause.Equals(returnRow[conditionIndex]))
+                        {
+                            var entry = addToList(selectIndex, fields, returnRow);
+                            if (entry != null)
+                            {
+                                dynPosts.Add(entry);
+                            }
+
+                        }
+                    }
+                    break;
+                case "<":
+                    {
+                        if (int.TryParse(returnRow[conditionIndex], out int K)
+                            && int.TryParse(whereClause, out int J)
+                            && K < J)
+                        {
+                            var entry = addToList(selectIndex, fields, returnRow);
+                            if (entry != null)
+                            {
+                                dynPosts.Add(entry);
+                            }
+                        }
+                    }
+                    break;
+                case ">":
+                    {
+                        if (int.TryParse(returnRow[conditionIndex], out int K)
+                            && int.TryParse(whereClause, out int J)
+                            && K > J)
+                        {
+                            var entry = addToList(selectIndex, fields, returnRow);
+                            if (entry != null)
+                            {
+                                dynPosts.Add(entry);
+                            }
+                        }
+                    }
+                    break;
+                case ">=":
+                    {
+                        if (int.TryParse(returnRow[conditionIndex], out int K)
+                            && int.TryParse(whereClause, out int J)
+                            && K >= J)
+                        {
+                            var entry = addToList(selectIndex, fields, returnRow);
+                            if (entry != null)
+                            {
+                                dynPosts.Add(entry);
+                            }
+                        }
+                    }
+                    break;
+                case "<=":
+                    {
+                        if (int.TryParse(returnRow[conditionIndex], out int K)
+                            && int.TryParse(whereClause, out int J)
+                            && K <= J)
+                        {
+                            var entry = addToList(selectIndex, fields, returnRow);
+                            if (entry != null)
+                            {
+                                dynPosts.Add(entry);
+                            }
+                        }
+                    }
+                    break;
+            }
         }
 
         public DynamicEntity addToList(int[] selectIndex, string[] fields, string[] returnRow)
