@@ -9,16 +9,10 @@ using System.Web;
 
 namespace CSVORM_Magnitude.Controllers.Helper
 {
-    public class rowFinderVariable{
-        string[] row;
-        string[] fields;
-        List<int> selectIndex;
-        SimpleCondition condition;
-    }
-    public class ValuesHelper
+    public class QueryHelper
     {
 
-        public void rowFinder(string[] row, string[] fields, List<int> selectIndex, SimpleCondition condition, ref List<DynamicEntity> dynPosts)
+        public void rowFinder(string[] row, string[] fields, List<int> selectIndex, SimpleCondition condition, ref List<DynamicEntity> dynRows)
         {
             string[] returnRow = row;
             int conditionIndex = Array.IndexOf(fields, condition.colName);
@@ -29,7 +23,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                     {
                         if (whereClause.Equals(returnRow[conditionIndex]))
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynPosts);
+                            addToList(selectIndex, fields, returnRow, ref dynRows);
                         }
                     }
                     break;
@@ -37,7 +31,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                     {
                         if (!whereClause.Equals(returnRow[conditionIndex]))
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynPosts);
+                            addToList(selectIndex, fields, returnRow, ref dynRows);
                         }
                     }
                     break;
@@ -47,7 +41,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                             && int.TryParse(whereClause, out int J)
                             && K < J)
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynPosts);
+                            addToList(selectIndex, fields, returnRow, ref dynRows);
                         }
                     }
                     break;
@@ -57,7 +51,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                             && int.TryParse(whereClause, out int J)
                             && K > J)
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynPosts);
+                            addToList(selectIndex, fields, returnRow, ref dynRows);
 
                         }
                     }
@@ -68,7 +62,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                             && int.TryParse(whereClause, out int J)
                             && K >= J)
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynPosts);
+                            addToList(selectIndex, fields, returnRow, ref dynRows);
                         }
                     }
                     break;
@@ -78,7 +72,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                             && int.TryParse(whereClause, out int J)
                             && K <= J)
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynPosts);
+                            addToList(selectIndex, fields, returnRow, ref dynRows);
                         }
                     }
                     break;
@@ -106,16 +100,16 @@ namespace CSVORM_Magnitude.Controllers.Helper
         {
             return lst.FindAll(i => GetProperty(i, propName).Equals(value));
         }
-        public void addToList(List<int> selectIndex, string[] fields, string[] returnRow, ref List<DynamicEntity> dynPosts)
+        public void addToList(List<int> selectIndex, string[] fields, string[] returnRow, ref List<DynamicEntity> dynRows)
         {
             Dictionary<string, object> values = new Dictionary<string, object>();
-            if (LookUpAlt(dynPosts, "emp_id", returnRow[0]) == 0)
+            if (LookUpAlt(dynRows, "id", returnRow[0]) == 0)
             {
                 foreach (int i in selectIndex)
                 {
                     values.Add(fields[i], returnRow[i]);
                 }
-                dynPosts.Add(new DynamicEntity(values));
+                dynRows.Add(new DynamicEntity(values));
             }
         }
 

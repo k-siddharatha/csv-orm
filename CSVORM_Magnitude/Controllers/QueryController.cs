@@ -15,29 +15,44 @@ using CSVORM_Magnitude.Controllers.Helper;
 
 namespace CSVORM_Magnitude.Controllers
 {
-    public class ValuesController : ApiController
+    public class QueryController : ApiController
     {
-        
-        // select name from test.csv where salary > 30
+
+        // select id, name, salary from test.csv where (salary < 4000000) OR (id = 1) OR (name = sid_1)
         // GET api/values
         public IEnumerable<DynamicEntity> Get(string csvTable)
         {
-            List<DynamicEntity> dynPosts = new List<DynamicEntity>();
-            var path = HttpContext.Current.Server.MapPath(@"~\App_Data\" + csvTable + ".csv");
-            var conditionClauses = "(salary < 4000000) OR (emp_id = 1) OR (name = sid_1)";
-            string[] select = { "emp_id", "name", "salary" };
+            // @input values
+            var conditionClauses = "(salary < 4000000) OR (id = 1) OR (name = sid_1)";
+            string[] select = { "id", "name", "salary" };
 
+            // find the file in a folder location inside App_Data
+            var path = HttpContext.Current.Server.MapPath(@"~\App_Data\" + csvTable + ".csv");
+            // helping methods are written in helper class
+            QueryHelper helper = new QueryHelper();
+
+            // Creating dynamic rows of Dynamic Class Entity DynamicObject
+            List<DynamicEntity> dynRows = new List<DynamicEntity>();
+
+
+            //string[] orIndex = conditionClauses.IndexOf("OR");
+            //string[] andIndex = conditionClauses.IndexOf("AND");
             string[] conditionClause;
             string[] complexCondition = conditionClauses.Split(new string[] { "AND", "OR" }, StringSplitOptions.RemoveEmptyEntries);
 
+
+            //complex condition keeps list of simple conditions
             ComplexCondition complex = new ComplexCondition();
+
+            //may have more than one and or ?? rethink
             complex.AndOrOr = new List<AndOrOr>();
 
             complex.AndOrOr.Add(conditionClauses.Contains("AND") ? AndOrOr.AND : AndOrOr.OR);
             complex.condtions = new List<SimpleCondition>();
 
-            ValuesHelper helper = new ValuesHelper();
-            foreach (string condition in complexCondition) {
+
+            foreach (string condition in complexCondition)
+            {
                 conditionClause = condition.Replace('(', ' ').Replace(')', ' ').Trim().Split();
                 SimpleCondition simpleConditions = new SimpleCondition()
                 {
@@ -55,22 +70,23 @@ namespace CSVORM_Magnitude.Controllers
                 using (TextFieldParser csvParser = new TextFieldParser(path))
                 {
                     string[] fields = helper.csvParserDefaultSet(csvParser);
-                    
+
                     while (!csvParser.EndOfData)
                     {
                         string[] returnRow = csvParser.ReadFields();
 
                         List<int> selectList = new List<int>();
-                        foreach (var s in select) {
+                        foreach (var s in select)
+                        {
                             selectList.Add(Array.IndexOf(fields, s));
                         }
-                        
-                        helper.rowFinder(returnRow, fields, selectList, condition, ref dynPosts);                       
+
+                        helper.rowFinder(returnRow, fields, selectList, condition, ref dynRows);
                     }
                 }
             }
-            
-            return dynPosts;
+
+            return dynRows;
 
         }
 
