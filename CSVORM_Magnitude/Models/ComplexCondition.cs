@@ -10,7 +10,7 @@ namespace CSVORM_Magnitude.Models
     {
         public List<AndOrOr> AndOrOr;
         public List<SimpleCondition> condtions;
-        public void isRowMatch(string[] returnRow, string[] conditions)
+        public void rowFinder(string[] row, string[] fields, List<int> selectIndex, SimpleCondition condition, ref List<DynamicEntity> dynRows)
         {
             throw new NotImplementedException();
         }

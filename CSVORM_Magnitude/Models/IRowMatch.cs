@@ -7,6 +7,7 @@ namespace CSVORM_Magnitude.Models
 {
     public interface IRowMatch
     {
-        void isRowMatch(string[] returnRow, string[] conditions);
+        void rowFinder(string[] row, string[] fields, List<int> selectIndex, SimpleCondition condition, ref List<DynamicEntity> dynRows);
+
     }
 }

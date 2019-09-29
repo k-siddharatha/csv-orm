@@ -11,10 +11,11 @@ namespace CSVORM_Magnitude.Controllers.Helper
 {
     public class QueryHelper
     {
-
-        public void rowFinder(string[] row, string[] fields, List<int> selectIndex, SimpleCondition condition, ref List<DynamicEntity> dynRows)
+        
+        public DynamicEntity rowFinder(string[] row, string[] fields, List<int> selectIndex, SimpleCondition condition)
         {
             string[] returnRow = row;
+            DynamicEntity dynReturn = null;
             int conditionIndex = Array.IndexOf(fields, condition.colName);
             string whereClause = condition.value;
             switch (condition.opera)
@@ -23,7 +24,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                     {
                         if (whereClause.Equals(returnRow[conditionIndex]))
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynRows);
+                            dynReturn = conditionMatchRows(selectIndex, fields, returnRow);
                         }
                     }
                     break;
@@ -31,7 +32,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                     {
                         if (!whereClause.Equals(returnRow[conditionIndex]))
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynRows);
+                            dynReturn = conditionMatchRows(selectIndex, fields, returnRow);
                         }
                     }
                     break;
@@ -41,7 +42,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                             && int.TryParse(whereClause, out int J)
                             && K < J)
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynRows);
+                            dynReturn = conditionMatchRows(selectIndex, fields, returnRow);
                         }
                     }
                     break;
@@ -51,7 +52,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                             && int.TryParse(whereClause, out int J)
                             && K > J)
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynRows);
+                            dynReturn = conditionMatchRows(selectIndex, fields, returnRow);
 
                         }
                     }
@@ -62,7 +63,7 @@ namespace CSVORM_Magnitude.Controllers.Helper
                             && int.TryParse(whereClause, out int J)
                             && K >= J)
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynRows);
+                            dynReturn = conditionMatchRows(selectIndex, fields, returnRow);
                         }
                     }
                     break;
@@ -72,11 +73,12 @@ namespace CSVORM_Magnitude.Controllers.Helper
                             && int.TryParse(whereClause, out int J)
                             && K <= J)
                         {
-                            addToList(selectIndex, fields, returnRow, ref dynRows);
+                            dynReturn = conditionMatchRows(selectIndex, fields, returnRow);
                         }
                     }
                     break;
             }
+            return dynReturn;
         }
         private static object GetProperty(dynamic target, string name)
         {
@@ -93,12 +95,19 @@ namespace CSVORM_Magnitude.Controllers.Helper
             {
                 return 0;
             }
+
             var values = lst.FindAll(i => GetProperty(i, propName).Equals(value));
             return (values).Count;
         }
-        public object LookUp(List<dynamic> lst, string propName, object value)
+        public object LookUp(List<DynamicEntity> lst, string propName, object value)
         {
             return lst.FindAll(i => GetProperty(i, propName).Equals(value));
+        }
+
+        public object LookUp(DynamicEntity de, string propName)
+        {
+            
+            return GetProperty(de, propName);
         }
         public void addToList(List<int> selectIndex, string[] fields, string[] returnRow, ref List<DynamicEntity> dynRows)
         {
@@ -111,6 +120,20 @@ namespace CSVORM_Magnitude.Controllers.Helper
                 }
                 dynRows.Add(new DynamicEntity(values));
             }
+        }
+
+        public DynamicEntity conditionMatchRows(List<int> selectIndex, string[] fields, string[] returnRow) {
+
+            Dictionary<string, object> values = new Dictionary<string, object>();
+            
+
+            foreach (int i in selectIndex)
+            {
+                values.Add(fields[i], returnRow[i]);
+            }
+
+            return new DynamicEntity(values);
+
         }
 
         public string[] csvParserDefaultSet(TextFieldParser csvParser)

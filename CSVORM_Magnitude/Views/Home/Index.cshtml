@@ -1,21 +1,38 @@
 ﻿
 <script>
-    var queryCSV = function () {
-        $.getJSON("https://localhost:44344/api/query?csvTable=test", function (result) {
+    var queryCSV = function (f,c,s) {
+        $.getJSON('https://localhost:44344/api/query?csvTable='+f+'&conditionType='+c+'&selectType='+s, function (result) {
             document.getElementById('textArea').style.display = 'block';
             document.getElementById('textArea').value = JSON.stringify(result);
         });
     }
+
 </script>
 <div style="margin:30px auto 30px 30px;">
+    <h2>CSV Query</h2>
 
-    <ul>
-        <li>filename is test.csv</li>
-        <li>conditionClauses = "(salary < 4000000) OR (id = 1) OR (name = sid_1)"</li>
-        <li>string[] select = { "id", "name", "salary" };</li>
-        <li> test.csv in App_Data </li>
-        <li>  <button type="button" onclick="queryCSV()">call query</button> </li>
+
+    Info:
+    <ul style="list-style-type:none;">
+        <li>select(0) = id,name,salary</li>
+        <li>select(1) = id,name,age,salary</li>
+        <li>condition(0) = (salary < 4000000) OR (id = 1) OR (name = sid-1)</li>
+        <li>condition(1) = (age < 25) AND (contract = FALSE) AND (name = sid-1)</li>
+        <li>test.csv in App_Data </li>
+        <li>scope one level of complex queries i.e. brackets not considered</li>
     </ul>
+
+    Filename (test)
+    <div><input type="text" id="file" value="test" /></div>
+    Condition (0/1)
+    <div><input type="text" id="condtion" value="0" /></div>
+    Select (0/1)
+    <div><input type="text" id="sel" value="0" /></div>
+
+
+    <div>
+        <button type="button" onclick="queryCSV(file.value,condtion.value, sel.value)">call query</button>
+    </div>
 
     <div>
         <textarea id="textArea" style="height:400px; width:400px; display:none"></textarea>

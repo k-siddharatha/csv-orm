@@ -10,7 +10,8 @@ namespace CSVORM_Magnitude.Models
         public string colName;
         public string value;
         public string opera;
-        public void isRowMatch(string[] returnRow, string[] conditions)
+
+        public void rowFinder(string[] row, string[] fields, List<int> selectIndex, SimpleCondition condition, ref List<DynamicEntity> dynRows)
         {
             throw new NotImplementedException();
         }
