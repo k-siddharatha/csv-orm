@@ -14,19 +14,19 @@ namespace CSVORM_Magnitude.Controllers
     {
 
         // preframed condtions 
-        public static string conditionInput = "(salary < 4000000) OR (id = 1) OR (name = sid-1)";
-        public static string[] selectInput = { "id", "name", "salary" };
+        private static string conditionInput = "(salary < 4000000) OR (id = 1) OR (name = sid-1)";
+        private static string[] selectInput = { "id", "name", "salary" };
 
-        public static string conditionInput1 = "(age < 25) AND (contract = FALSE) AND (name = sid-1)";
-        public static string[] selectInput1 = { "id","name","age", "salary" };
+        private static string conditionInput1 = "(age < 25) AND (contract = FALSE) AND (name = sid-1)";
+        private static string[] selectInput1 = { "id","name","age", "salary" };
 
         // GET api/values
         public IEnumerable<DynamicEntity> Get(string csvTable, string conditionType = null, string selectType = null)
         {
-         
+
             // condtions
-            var conditionClauses = conditionType == null ? conditionInput : conditionType == "1"? conditionInput1: conditionInput;
-            string[] select = selectType == null ? selectInput : selectType == "1" ? selectInput1 : selectInput;
+            var conditionClauses = (conditionType == null) || (conditionType.Equals("0")) ? conditionInput : conditionType.Equals("1") ? conditionInput1 : conditionType;
+            string[] select = ((selectType == null) || (selectType.Equals("0")) )? selectInput : selectType.Equals("1") ? selectInput1 : selectType.Split();
             
             // Creating dynamic rows of Dynamic Class Entity DynamicObject
             List<DynamicEntity> dynRows = new List<DynamicEntity>();
@@ -92,6 +92,11 @@ namespace CSVORM_Magnitude.Controllers
 
                 }
 
+                // only one condition
+                if (complex.condtions.Count == 1)
+                {
+                    return dynRowsPerCondition;
+                }
                 // one level of complex queries all or / all and
 
                 if (dynRows.Count == 0)
@@ -116,7 +121,7 @@ namespace CSVORM_Magnitude.Controllers
 
                     foreach (var a in dynRowsPerCondition)
                     {
-                        if (helper.LookUpAlt(dynRows, "id", helper.LookUp(a, "id")) == 1 
+                        if (helper.LookUpAlt(dynRows, "id", helper.LookUp(a, "id")) == 1
                             && helper.LookUpAlt(dynRowsReturn, "id", helper.LookUp(a, "id")) == 0)
                         {
                             dynRowsReturn.Add(a);
