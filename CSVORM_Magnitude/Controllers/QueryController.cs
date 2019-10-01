@@ -46,7 +46,17 @@ namespace CSVORM_Magnitude.Controllers
             ComplexCondition complex = new ComplexCondition();
             //may have more than one and or at one level
             complex.AndOrOr = new List<AndOrOr>();
-            complex.AndOrOr.Add(conditionClauses.Contains("AND") ? AndOrOr.AND : AndOrOr.OR);
+            int count = 0;
+            foreach (string s in conditionClauses.Split())
+            {
+                if (s.Equals("AND"))
+                {
+                    complex.AndOrOr.Add(AndOrOr.AND);
+                }
+                else if (s.Equals("OR")){
+                    complex.AndOrOr.Add(AndOrOr.OR);
+                }
+            }
             complex.condtions = new List<SimpleCondition>();
             
             // filling conditions to complex conditions
@@ -103,7 +113,7 @@ namespace CSVORM_Magnitude.Controllers
                 {
                     dynRows.AddRange(dynRowsPerCondition);
                 }
-                else if (complex.AndOrOr[0] == AndOrOr.OR)
+                else if (complex.AndOrOr[count] == AndOrOr.OR)
                 {
                     //LEFT JOIN
                     foreach (var a in dynRowsPerCondition)
@@ -114,8 +124,9 @@ namespace CSVORM_Magnitude.Controllers
                         }
                     }
                     dynRowsReturn = dynRows;
+                    count++;
                 }
-                else if (complex.AndOrOr[0] == AndOrOr.AND)
+                else if (complex.AndOrOr[count] == AndOrOr.AND)
                 {
                     // INNER EQUE JOIN
 
@@ -128,9 +139,9 @@ namespace CSVORM_Magnitude.Controllers
                         }
                     }
                     dynRows = dynRowsReturn;
-
+                    count++;
                 }
-
+                
             }
             return dynRowsReturn;
         }
